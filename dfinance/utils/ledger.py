@@ -16,6 +16,7 @@ and will maintain accounting and finance statistics for the portfolio.
     # returns the return
 """
 import datetime
+from pprint import pprint
 
 import pandas as pd
 
@@ -32,7 +33,7 @@ test_transactions = [
     for i in test_transactions
 ]
 
-print(test_transactions)
+# print(test_transactions)
 
 
 class Ledger:
@@ -42,16 +43,24 @@ class Ledger:
         self.tx = []
 
     def add_transaction(
-        self, ticker: str, shares: int, price: float, trade_time: datetime
+        self,
+        ticker: str,
+        shares: int,
+        price: float,
+        exec_time: datetime,
+        details: dict = {},
+        broadcast: bool = False,
     ):
-        self.tx.append(
-            {
-                "ticker": ticker,
-                "shares": shares,
-                "price": price,
-                "trade_time": trade_time,
-            }
-        )
+        new = {
+            "ticker": ticker,
+            "shares": shares,
+            "price": price,
+            "trade_time": exec_time,
+            "details": details,
+        }
+        self.tx.append(new)
+        if broadcast:
+            pprint(new)
 
     def get_balances(self, as_of: datetime.datetime = None):
         # returns a dataframe with the balances of the portfolio at timestamp
@@ -61,7 +70,6 @@ class Ledger:
         _sorted = tx_asof.sort_values("trade_time", ascending=True)
         gb = _sorted.groupby("ticker")
         _sorted["current_position_usd_value"] = gb.cumsum()["shares"]
-        print(_sorted)
         _sorted["net_value_at_timestamp"] = gb.cumsum()["usd_equity_change"]
         # filter to most reecnt row
         idx = gb["trade_time"].transform(max) == _sorted["trade_time"]
